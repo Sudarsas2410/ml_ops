@@ -1,0 +1,22 @@
+# Alternative to the LoadBalancer Service. Needs an ingress controller:
+#   minikube addons enable ingress
+#   kubectl apply -f k8s/optional/ingress.yaml
+#   curl -H "Host: heart-api.local" http://$(minikube ip)/health
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: heart-api
+  namespace: heart-mlops
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: heart-api.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: heart-api
+                port:
+                  name: http

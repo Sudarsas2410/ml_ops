@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: heart-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api:8000"]
+
+  # To monitor the Kubernetes deployment instead, run
+  #   kubectl -n heart-mlops port-forward svc/heart-api 8080:80
+  # and replace the target above with "host.docker.internal:8080".

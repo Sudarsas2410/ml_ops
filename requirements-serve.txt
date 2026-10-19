@@ -1,0 +1,12 @@
+# Minimal runtime for the Docker image (inference only: no MLflow, plotting or notebooks).
+# Keep numpy/pandas/scikit-learn/joblib identical to requirements.txt so the pickled
+# pipeline loads exactly as trained.
+numpy==2.5.4
+pandas==3.0.6
+scipy==1.18.1
+scikit-learn==1.9.1
+joblib==1.6.0
+fastapi==0.146.0
+uvicorn==0.54.0
+pydantic==2.14.1
+prometheus-client==0.26.0

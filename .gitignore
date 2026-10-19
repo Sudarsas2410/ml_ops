@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+test-results.xml
+.ipynb_checkpoints/
+
+# MLflow local stores (regenerate with `make train`; screenshots + reports/experiment_summary.md are the evidence)
+mlflow.db
+mlruns/
+mlartifacts/
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db

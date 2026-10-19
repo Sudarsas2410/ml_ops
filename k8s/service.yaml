@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: heart-api
+  namespace: heart-mlops
+  labels:
+    app: heart-api
+spec:
+  # LoadBalancer works out of the box on Docker Desktop and cloud clusters.
+  # On Minikube run `minikube tunnel` (or use `minikube service heart-api -n heart-mlops --url`).
+  type: LoadBalancer
+  selector:
+    app: heart-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

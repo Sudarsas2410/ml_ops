@@ -1,0 +1,142 @@
+name: CI
+
+# lint -> test -> train -> docker. Each job `needs` the previous one, so a failure at any
+# stage stops the pipeline and the run shows exactly which step broke (see the Actions log).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.13"
+  MLFLOW_DISABLE_TELEMETRY: "true"
+
+jobs:
+  lint:
+    name: Lint (flake8 + black)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install linters
+        run: pip install flake8==7.4.1 black==26.10.1
+      - name: flake8
+        run: flake8 src api tests scripts
+      - name: black --check
+        run: black --check --diff src api tests scripts
+
+  test:
+    name: Unit tests
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: pytest with coverage
+        run: >
+          pytest --cov=src --cov=api --cov-report=term-missing --cov-report=xml
+          --cov-fail-under=85 --junitxml=test-results.xml
+      - name: Add coverage to the job summary
+        if: always()
+        run: |
+          echo "## Test results" >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+          try:
+              root = ET.parse("test-results.xml").getroot()
+              suite = root if root.tag == "testsuite" else root[0]
+              print(f"- tests: {suite.get('tests')}  failures: {suite.get('failures')}  errors: {suite.get('errors')}  skipped: {suite.get('skipped')}")
+              cov = ET.parse("coverage.xml").getroot()
+              print(f"- line coverage: {float(cov.get('line-rate')) * 100:.1f}%")
+          except Exception as exc:
+              print(f"- (no report: {exc})")
+          PY
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            test-results.xml
+            coverage.xml
+
+  train:
+    name: Train model and log to MLflow
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Get dataset (no-op when it is already committed)
+        run: python -m src.download_data
+      - name: Clean data
+        run: python -m src.data_processing --force
+      - name: EDA figures
+        run: python -m src.eda
+      - name: Train, tune and track
+        run: python -m src.train
+      - name: Summarise experiment in the job summary
+        run: python scripts/mlflow_summary.py --output "$GITHUB_STEP_SUMMARY" --append
+      - name: Upload model, metrics, figures and MLflow store
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-outputs
+          path: |
+            models/
+            reports/
+            data/processed/
+            mlflow.db
+            mlartifacts/
+      - name: Upload model for the docker job
+        uses: actions/upload-artifact@v4
+        with:
+          name: model
+          path: models/
+
+  docker:
+    name: Build and smoke-test the container
+    needs: train
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the model trained in this run
+        uses: actions/download-artifact@v4
+        with:
+          name: model
+          path: models/
+      - name: Build image
+        run: docker build -t heart-api:ci .
+      - name: Run container
+        run: docker run -d --name heart-api -p 8000:8000 heart-api:ci
+      - name: Smoke test (fails the job on any error)
+        run: scripts/smoke_test.sh http://localhost:8000
+      - name: Collect container logs
+        if: always()
+        run: docker logs heart-api > docker.log 2>&1 || true
+      - name: Upload container logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-logs
+          path: docker.log
