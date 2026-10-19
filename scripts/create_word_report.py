@@ -1,4 +1,5 @@
 from pathlib import Path
+from html.parser import HTMLParser
 import re
 
 import markdown
@@ -21,6 +22,7 @@ if text.startswith("---"):
 # Replace Markdown images with temporary tokens, preserving only real images.
 images = {}
 
+
 def image_replacement(match):
     alt = match.group(1).strip()
     raw_path = match.group(2).strip()
@@ -34,6 +36,7 @@ def image_replacement(match):
     images[token] = (path, alt)
     return f"\n\n{token}\n\n"
 
+
 text = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", image_replacement, text)
 
 # Convert remaining Markdown to HTML for parsing headings, paragraphs, lists and tables.
@@ -42,8 +45,6 @@ html = markdown.markdown(
     extensions=["tables", "fenced_code", "sane_lists"],
 )
 
-from html.parser import HTMLParser
-from html import unescape
 
 class BlocksParser(HTMLParser):
     def __init__(self):
@@ -103,6 +104,7 @@ class BlocksParser(HTMLParser):
         elif data.strip():
             self.blocks.append({"tag": "p", "text": data})
 
+
 parser = BlocksParser()
 parser.feed(html)
 
@@ -144,6 +146,7 @@ for line in [
 
 doc.add_page_break()
 
+
 def add_inline_text(paragraph, value):
     # Basic inline formatting for bold, italic and code; retain readable text.
     pattern = re.compile(r"(\*\*.*?\*\*|\*.*?\*|`.*?`)")
@@ -160,6 +163,7 @@ def add_inline_text(paragraph, value):
             run.font.size = Pt(9)
         else:
             paragraph.add_run(part)
+
 
 for block in parser.blocks:
     tag = block["tag"]
