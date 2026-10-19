@@ -108,6 +108,10 @@ example. One parent run groups the three nested model runs; the best model is re
 
 **Experiment summary.** Six MLflow runs are present in the local tracking store. The comparison evaluated Logistic Regression, Random Forest and Gradient Boosting using seeded stratified five-fold CV and a 20% hold-out set. Logistic Regression had the highest mean CV ROC-AUC, while Gradient Boosting had the highest hold-out accuracy. This demonstrates why model selection should follow a predeclared metric rather than selecting whichever model has the best single hold-out score.
 
+![MLflow experiment metrics](../screenshots/09_mlflow_metrics.png)
+
+![MLflow tracked parameters](../screenshots/10_mlflow_parameters.png)
+
 # 6. Model packaging and reproducibility
 
 * `models/model.joblib`: the complete fitted pipeline (preprocessing + estimator); `models/metrics.json`: metrics,
@@ -128,6 +132,8 @@ example. One parent run groups the three nested model runs; the best model is re
 **Failure behaviour.** The workflow is configured to stop when a required CI stage fails. A deliberately failing test run and its GitHub Actions screenshot have not been captured, so this report does not claim that a failure demonstration was completed.
 
 
+![Successful GitHub Actions CI/CD workflow](../screenshots/01_github_actions.png)
+
 # 8. Containerisation and deployment
 
 ## 8.1 Docker
@@ -145,6 +151,10 @@ non-root user, read-only root filesystem; `LoadBalancer` Service on port 80.
 
 **Access instructions:** `minikube kubectl -- -n heart-mlops port-forward service/heart-api 8080:80`, then access http://127.0.0.1:8080/ready and /predict.
 
+![Kubernetes deployment and pod status](../screenshots/04_kubernetes.png)
+
+![Kubernetes API smoke-test results](../screenshots/05_kubernetes_api_test.png)
+
 # 9. Monitoring and logging
 
 * Structured JSON logs for every request (id, path, status, latency) and every prediction (class, confidence).
@@ -155,6 +165,10 @@ non-root user, read-only root filesystem; `LoadBalancer` Service on port 80.
 
 
 **Traffic test.** `python scripts/generate_traffic.py --requests 300` completed with 283 successful responses (HTTP 200) and 17 invalid-payload responses (HTTP 422). The API metrics endpoint exposed request counters for these response classes, and the Prometheus target `heart-api` was reported as up. Exact dashboard rate and p95 latency values were not recorded, so they are not claimed here.
+
+![Prometheus API monitoring target](../screenshots/07_prometheus.png)
+
+![Grafana API monitoring dashboard](../screenshots/08_grafana.png)
 
 # 10. Architecture
 
