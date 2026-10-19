@@ -36,7 +36,8 @@ code="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE_URL/predict" \
 [ "$code" = "422" ] || fail "invalid payload should return 422, got $code"
 pass "POST /predict with invalid payload -> 422"
 
-curl -fsS "$BASE_URL/metrics" | grep -q '^http_requests_total' || fail "GET /metrics has no http_requests_total"
+metrics="$(curl -fsS "$BASE_URL/metrics")" || fail "GET /metrics returned an HTTP error"
+echo "$metrics" | grep '^http_requests_total' >/dev/null || fail "GET /metrics has no http_requests_total"
 pass "GET /metrics exposes Prometheus metrics"
 
 echo "All smoke tests passed."
