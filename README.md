@@ -5,7 +5,7 @@ the model as a containerised, monitored REST API with CI/CD, experiment tracking
 
 > Educational project. Not a medical device and not for clinical use.
 
-**Repository:** `https://github.com/<your-username>/<your-repo>` &nbsp;|&nbsp; **CI:** see the *Actions* tab
+**Repository:** `https://github.com/Sudarsas2410/ml_ops` &nbsp;|&nbsp; **CI:** see the *Actions* tab
 
 ![Architecture](report/architecture.png)
 
@@ -44,7 +44,7 @@ Requires Python 3.11+ (developed on 3.13). Docker and a local Kubernetes (Miniku
 for sections 6-8.
 
 ```bash
-git clone https://github.com/<your-username>/<your-repo>.git && cd <your-repo>
+git clone https://github.com/Sudarsas2410/ml_ops.git && cd ml_ops
 python -m venv .venv
 source .venv/bin/activate            # Windows PowerShell: .venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt

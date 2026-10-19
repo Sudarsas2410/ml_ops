@@ -1,0 +1,19 @@
+Kubernetes deployment evidence
+2026-10-19T23:51:01+05:30
+
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES            SELECTOR
+deployment.apps/heart-api   2/2     2            2           10m   api          heart-api:1.0.0   app=heart-api
+
+NAME                TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE   SELECTOR
+service/heart-api   LoadBalancer   10.102.67.45   <pending>     80:30209/TCP   10m   app=heart-api
+
+NAME                             READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+pod/heart-api-56df4558f8-fw2hr   1/1     Running   0          10m   10.244.0.4   minikube   <none>           <none>
+pod/heart-api-56df4558f8-vwtmk   1/1     Running   0          10m   10.244.0.3   minikube   <none>           <none>
+
+Readiness:
+{"status":"ready"}
+Health:
+{"status":"ok","version":"1.0.0"}
+Prediction:
+{"prediction":0,"label":"no heart disease","confidence":0.5402,"probability_disease":0.4598,"model_version":"1.0.0"}

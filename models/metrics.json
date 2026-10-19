@@ -64,11 +64,11 @@
   "n_train": 242,
   "n_test": 61,
   "seed": 42,
-  "mlflow_parent_run_id": "d2d82ff061c44f94954bd81c90d71077",
-  "mlflow_best_run_id": "043cbbecee6b48c0b90deb1a2a16badb",
+  "mlflow_parent_run_id": "f11b032e9d22498a8bed2cb8c632eb39",
+  "mlflow_best_run_id": "6511c722bb174515bc8667b7e8c3b01d",
   "sklearn_version": "1.9.1",
-  "python_version": "3.14.3",
-  "trained_at": "2026-10-19T04:53:32+00:00",
-  "data_sha256": "6cbf1fdce4ad1ff965291560f5d0b1a360eea9135625f1323bf75cca5ea2cac0",
+  "python_version": "3.12.9",
+  "trained_at": "2026-10-19T17:33:55+00:00",
+  "data_sha256": "d0021ed770110715dd171178f6a9f64f23e2c31e40664bbe73472f0e47658c14",
   "version": "1.0.0"
 }

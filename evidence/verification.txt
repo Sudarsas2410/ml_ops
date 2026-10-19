@@ -1,0 +1,40 @@
+Heart Disease MLOps Assignment — Verification Evidence
+2026-10-20T00:03:54+05:30
+
+===== Git branch and commit =====
+master
+b5677ec Add heart disease MLOps pipeline
+
+===== Docker Compose services =====
+NAME                  IMAGE                     COMMAND                  SERVICE      CREATED          STATUS                    PORTS
+ml_ops-api-1          heart-api:1.0.0           "uvicorn api.main:ap…"   api          41 minutes ago   Up 41 minutes (healthy)   0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp
+ml_ops-grafana-1      grafana/grafana:11.3.0    "/run.sh"                grafana      41 minutes ago   Up 41 minutes             0.0.0.0:3000->3000/tcp, [::]:3000->3000/tcp
+ml_ops-prometheus-1   prom/prometheus:v2.55.1   "/bin/prometheus --c…"   prometheus   41 minutes ago   Up 41 minutes             0.0.0.0:9090->9090/tcp, [::]:9090->9090/tcp
+
+===== API readiness =====
+{"status":"ready"}
+===== API health =====
+{"status":"ok","version":"1.0.0"}
+===== Prometheus readiness =====
+Prometheus Server is Ready.
+
+===== API metrics =====
+http_requests_total{handler="/health",method="GET",status="200"} 83.0
+http_requests_total{handler="/metrics",method="GET",status="200"} 495.0
+http_requests_total{handler="/ready",method="GET",status="200"} 3.0
+http_requests_total{handler="/predict",method="POST",status="200"} 284.0
+http_requests_total{handler="/predict",method="POST",status="422"} 18.0
+
+===== Kubernetes deployment =====
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES            SELECTOR
+deployment.apps/heart-api   2/2     2            2           23m   api          heart-api:1.0.0   app=heart-api
+
+NAME                             READY   STATUS    RESTARTS   AGE   IP           NODE       NOMINATED NODE   READINESS GATES
+pod/heart-api-56df4558f8-fw2hr   1/1     Running   0          23m   10.244.0.4   minikube   <none>           <none>
+pod/heart-api-56df4558f8-vwtmk   1/1     Running   0          23m   10.244.0.3   minikube   <none>           <none>
+
+NAME                TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)        AGE   SELECTOR
+service/heart-api   LoadBalancer   10.102.67.45   <pending>     80:30209/TCP   23m   app=heart-api
+
+===== Kubernetes readiness =====
+{"status":"ready"}

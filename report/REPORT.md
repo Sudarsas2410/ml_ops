@@ -1,14 +1,9 @@
 ---
 title: "MLOps Assignment 1: Heart Disease Risk Prediction, End-to-End"
 subtitle: "Machine Learning Operations (AIMLCZG523), BITS Pilani"
-author: "[FILL: your name]   |   [FILL: BITS ID]   |   [FILL: group/section]"
-date: "[FILL: submission date]"
+author: "Sudarsan S | 2025AE05524 | N/A"
+date: "20 October 2026"
 ---
-
-> **How to use this template.** Everything marked **[FILL]** needs your own numbers, screenshots or words. Paragraphs
-> without a marker describe what the repository does and should be checked against your final code, then reworded so
-> the report reflects your own understanding. Delete these instruction blocks. Target length: about 10 pages with
-> figures. Build with `make report` (needs pandoc) or paste into Word and export to PDF.
 
 # 1. Introduction
 
@@ -16,16 +11,16 @@ date: "[FILL: submission date]"
 reproducible, tested, containerised and monitored API.
 
 **Dataset.** UCI Heart Disease, Cleveland subset: 303 patients, 13 features, diagnosis `num` (0-4) binarised to
-presence/absence. **[FILL: one sentence on why this framing is reasonable.]**
+presence/absence. Binarising the original 0–4 diagnosis makes the task a binary classification problem; it does not preserve disease severity.
 
-**Repository:** [FILL: https://github.com/your-username/your-repo]  
-**Deployed API / access instructions:** [FILL: URL, or "run `kubectl ... ` as in Section 8"]  
-**Video:** [FILL: link or file name]
+**Repository:** https://github.com/Sudarsas2410/ml_ops  
+**Deployed API / access instructions:** Local Minikube access via kubectl port-forward; see Section 8  
+**Video:** Not yet recorded; see `docs/VIDEO_SCRIPT.md`.
 
 # 2. Setup and installation
 
 ```bash
-git clone [FILL: repo URL] && cd [FILL: repo]
+git clone https://github.com/Sudarsas2410/ml_ops && cd ml_ops
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 python -m src.download_data && python -m src.data_processing
@@ -34,7 +29,7 @@ pytest
 uvicorn api.main:app --port 8000
 ```
 
-Python [FILL: version used], OS [FILL], Docker [FILL: version], Kubernetes [FILL: Minikube/Docker Desktop version].
+Development environment: Python 3.12.9 on Rocky Linux 9.5 (x86_64), Docker Engine 28.0.1, Minikube 1.35.0 with Kubernetes 1.32.0. The API image uses `python:3.13-slim`.
 All scripts run from a clean checkout using `requirements.txt`; versions are pinned.
 
 # 3. Data acquisition, cleaning and EDA
@@ -45,9 +40,9 @@ All scripts run from a clean checkout using `requirements.txt`; versions are pin
 
 | Issue found | Treatment | Reason |
 |---|---|---|
-| `?` in `ca` ([FILL] rows) and `thal` ([FILL] rows) | parsed as missing, mode imputation | categorical codes |
+| `?` in `ca` (4 rows) and `thal` (2 rows) | parsed as missing, mode imputation | categorical codes |
 | `num` takes values 0-4 | `target = (num > 0)` | task requires presence/absence |
-| duplicates / implausible values | [FILL: counts found] | avoids CV leakage; defensive checks |
+| Duplicate rows | 0 in the cleaned dataset | No duplicate rows were found after cleaning. |
 
 The scikit-learn pipeline repeats imputation and scaling inside each cross-validation fold, so nothing from a
 validation fold leaks into training.
@@ -56,14 +51,13 @@ validation fold leaks into training.
 
 ![Class balance](../reports/figures/01_class_balance.png){ width=55% }
 
-**[FILL: class counts and percentages; what this means for the choice of metrics.]**
+**Class balance:** 164 patients (54.1%) have target 0 and 139 (45.9%) have target 1. Both classes are represented, so accuracy alone is insufficient; ROC-AUC and disease-class recall are also reported.
 
 ![Distributions of continuous features by class](../reports/figures/02_numeric_histograms.png){ width=95% }
 
 ![Correlation heatmap](../reports/figures/05_correlation_heatmap.png){ width=75% }
 
-**[FILL: 3-5 findings in your own words, each tied to a figure: which features separate the classes, any outliers,
-any strongly correlated pairs, and what you changed or kept because of it.]**
+The class-balance figure shows 164 records in class 0 and 139 in class 1, so neither class dominates the dataset. The target-correlation figure shows the largest positive associations for `thal` (0.522), `ca` (0.460), `exang` (0.432) and `oldpeak` (0.425), while `thalach` is negatively associated (-0.417). These are associations, not causal effects. The raw data contain missing markers in `ca` (4 rows) and `thal` (2 rows); the cleaned dataset has no missing values and no duplicate rows. Histograms and boxplots support inspection of feature distributions, but this analysis did not establish a separate outlier-removal rule. Imputation, scaling and encoding remain inside the model pipeline to avoid fitting preprocessing on validation data.
 
 # 4. Feature engineering and modelling choices
 
@@ -81,24 +75,23 @@ any strongly correlated pairs, and what you changed or kept because of it.]**
 | Random Forest | `n_estimators` {100, 300}; `max_depth` {None, 4, 8}; `min_samples_leaf` {1, 3, 5} |
 | Gradient Boosting | `n_estimators` {100, 200}; `learning_rate` {0.05, 0.1}; `max_depth` {2, 3} |
 
-**Why these metrics.** **[FILL: explain why ROC-AUC for selection and why recall matters here.]**
+**Why these metrics.** ROC-AUC measures ranking discrimination across classification thresholds and is the selection metric used with stratified cross-validation. Recall is included because false negatives matter in a disease-screening context. This experimental model is not a clinical diagnostic tool.
 
 ## 4.1 Results
 
-**[FILL: paste the tables from `reports/experiment_summary.md`.]**
+The following table summarises the hold-out results; mean cross-validation ROC-AUC is shown separately to make the selection criterion explicit.
 
 | Model | CV ROC-AUC | Test accuracy | Test precision | Test recall | Test ROC-AUC |
 |---|---|---|---|---|---|
-| Logistic Regression | [FILL] | [FILL] | [FILL] | [FILL] | [FILL] |
-| Random Forest | [FILL] | [FILL] | [FILL] | [FILL] | [FILL] |
-| Gradient Boosting | [FILL] | [FILL] | [FILL] | [FILL] | [FILL] |
+| Logistic Regression | 0.903 ± 0.017 | 0.885 | 0.839 | 0.929 | 0.965 |
+| Random Forest | 0.902 ± 0.033 | 0.852 | 0.806 | 0.893 | 0.948 |
+| Gradient Boosting | 0.874 ± 0.025 | 0.902 | 0.867 | 0.929 | 0.961 |
 
 ![ROC curves on the hold-out set](../reports/figures/training/roc_overlay.png){ width=65% }
 
-![Confusion matrix of the selected model](../reports/figures/training/confusion_[FILL: best_model_name].png){ width=45% }
+![Confusion matrix of the selected model](../reports/figures/training/confusion_logistic_regression.png){ width=45% }
 
-**Selected model: [FILL].** **[FILL: why it won; whether the gap to the others exceeds the CV standard deviation; how
-CV and hold-out agree; most important features and whether that matches the EDA; one limitation.]**
+**Selected model: Logistic Regression.** It was selected by mean five-fold cross-validation ROC-AUC (0.903 ± 0.017). Random Forest was very close at 0.902 ± 0.033, so the small difference does not establish a meaningful superiority. On the hold-out set, Logistic Regression achieved ROC-AUC 0.965 and recall 0.929; Gradient Boosting had higher accuracy (0.902 versus 0.885). This illustrates that rankings depend on the metric. The EDA associations provide context but do not, by themselves, establish model feature importance. A key limitation is the small dataset of 303 records and the absence of external validation.
 
 # 5. Experiment tracking summary (MLflow)
 
@@ -107,13 +100,13 @@ CV metrics (mean and std), hold-out metrics, fit time, plots (ROC, confusion mat
 comparison), the full grid-search table, a classification report and the fitted pipeline with signature and input
 example. One parent run groups the three nested model runs; the best model is registered as `heart-disease-classifier`.
 
-![MLflow: runs table](../screenshots/03_mlflow_runs_table.png){ width=95% }
+**MLflow evidence:** capture the local runs table before submission; the screenshot has not yet been added.
 
-![MLflow: comparing the model runs](../screenshots/04_mlflow_compare_runs.png){ width=95% }
+**MLflow comparison evidence:** capture the comparison view before submission; the screenshot has not yet been added.
 
-![MLflow: artifacts of one run](../screenshots/05_mlflow_run_artifacts.png){ width=95% }
+**MLflow artifact evidence:** capture a run's artifact view before submission; the screenshot has not yet been added.
 
-**[FILL: number of runs you executed, what you changed between runs and what you learned.]**
+**Experiment summary.** Six MLflow runs are present in the local tracking store. The comparison evaluated Logistic Regression, Random Forest and Gradient Boosting using seeded stratified five-fold CV and a 20% hold-out set. Logistic Regression had the highest mean CV ROC-AUC, while Gradient Boosting had the highest hold-out accuracy. This demonstrates why model selection should follow a predeclared metric rather than selecting whichever model has the best single hold-out score.
 
 # 6. Model packaging and reproducibility
 
@@ -125,20 +118,15 @@ example. One parent run groups the three nested model runs; the best model is re
 
 # 7. CI/CD and automated testing
 
-**Tests.** [FILL: N] pytest tests, [FILL: %] coverage, covering data processing, model code, API behaviour and CLIs.
+**Tests.** 64 pytest tests passed with 94% overall coverage, covering data processing, model code, API behaviour and command-line workflows. Two deprecation warnings were reported; there were no test failures.
 
-![pytest output with coverage](../screenshots/06_pytest_coverage.png){ width=90% }
 
 **Pipeline** (`.github/workflows/ci.yml`): lint → test → train → docker. Each stage must pass for the next to run.
 
-![Successful workflow run](../screenshots/07_github_actions_success.png){ width=95% }
 
-![Workflow artifacts](../screenshots/09_github_actions_artifacts.png){ width=80% }
 
-**Failure behaviour.** I deliberately broke a test on branch `[FILL: branch name]` to show the pipeline fails and
-stops with a clear log.
+**Failure behaviour.** The workflow is configured to stop when a required CI stage fails. A deliberately failing test run and its GitHub Actions screenshot have not been captured, so this report does not claim that a failure demonstration was completed.
 
-![Failing run](../screenshots/10_github_actions_failure.png){ width=95% }
 
 # 8. Containerisation and deployment
 
@@ -146,20 +134,16 @@ stops with a clear log.
 
 Slim `python:3.13-slim` image, inference dependencies only, non-root user, health check, model baked in.
 
-![docker build](../screenshots/11_docker_build.png){ width=85% }
 
-![container running and answering /predict](../screenshots/12_docker_run_predict.png){ width=85% }
 
-## 8.2 Kubernetes ([FILL: Minikube / Docker Desktop / GKE...])
+## 8.2 Kubernetes (Minikube v1.35.0, Kubernetes v1.32.0, Docker driver)
 
 Deployment with 2 replicas, rolling updates, startup/readiness/liveness probes, CPU/memory requests and limits,
 non-root user, read-only root filesystem; `LoadBalancer` Service on port 80.
 
-![kubectl get pods,svc](../screenshots/14_kubectl_get_all.png){ width=85% }
 
-![Endpoint verified through the Service](../screenshots/15_k8s_predict.png){ width=85% }
 
-**Access instructions:** [FILL: exact commands/URL a grader can use].
+**Access instructions:** `minikube kubectl -- -n heart-mlops port-forward service/heart-api 8080:80`, then access http://127.0.0.1:8080/ready and /predict.
 
 # 9. Monitoring and logging
 
@@ -167,28 +151,24 @@ non-root user, read-only root filesystem; `LoadBalancer` Service on port 80.
 * Prometheus metrics at `/metrics` (request count, latency histogram, status codes, predictions by class, confidence).
 * Grafana dashboard provisioned from `monitoring/`.
 
-![API logs](../screenshots/19_api_logs.png){ width=90% }
 
-![Prometheus targets](../screenshots/17_prometheus_targets.png){ width=70% }
 
-![Grafana dashboard under load](../screenshots/18_grafana_dashboard.png){ width=95% }
 
-**[FILL: what the dashboard showed when you ran `generate_traffic.py` (rates, p95 latency, error panel).]**
+**Traffic test.** `python scripts/generate_traffic.py --requests 300` completed with 283 successful responses (HTTP 200) and 17 invalid-payload responses (HTTP 422). The API metrics endpoint exposed request counters for these response classes, and the Prometheus target `heart-api` was reported as up. Exact dashboard rate and p95 latency values were not recorded, so they are not claimed here.
 
 # 10. Architecture
 
 ![System architecture](architecture.png){ width=100% }
 
-**[FILL: 1 paragraph walking through the diagram, left to right, in your own words.]**
+The pipeline starts with downloading the Cleveland heart-disease data, then cleans and explores it before training candidate scikit-learn pipelines. Training records parameters and metrics in MLflow and saves the selected pipeline for inference. The FastAPI service loads that model and exposes health, readiness, prediction and Prometheus metrics endpoints. Docker packages the API, while Kubernetes runs two replicas with health probes and resource limits. Prometheus scrapes API metrics and Grafana provides the monitoring dashboard. Automated CI checks linting, tests, training and image building.
 
 # 11. Conclusions, limitations and future work
 
-**[FILL: what worked; honest limitations (small single-centre dataset, no external validation, no auth on the API, no
-drift monitoring); 2-3 concrete next steps such as model calibration, data-drift monitoring, canary deployment.]**
+The project brings together data cleaning, exploratory analysis, model comparison, MLflow experiment tracking, automated tests, Docker packaging, a local Kubernetes deployment and Prometheus metrics. The dataset contains only 303 records, and external validation has not been performed; the reported scores therefore do not establish clinical safety or generalisation to other populations. The API is a demonstration service without authentication, and a complete production drift-monitoring process has not been validated. Next steps are to evaluate the model on independent representative data, assess probability calibration and decision thresholds with qualified domain experts, and add monitored drift alerts and deployment safeguards.
 
 # 12. References
 
 * Detrano, R. et al. (1989). International application of a new probability algorithm for the diagnosis of coronary
   artery disease. *American Journal of Cardiology*, 64(5), 304-310.
 * Dua, D. and Graff, C. UCI Machine Learning Repository: Heart Disease. https://archive.ics.uci.edu/dataset/45/heart+disease
-* [FILL: any other source you used]
+* scikit-learn documentation: https://scikit-learn.org/stable/ (pipeline and model-selection concepts).
